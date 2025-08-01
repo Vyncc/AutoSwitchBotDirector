@@ -1,4 +1,4 @@
-\# Auto Switch Bot Director
+# Auto Switch Bot Director
 
 
 
