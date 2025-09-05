@@ -26,6 +26,12 @@ void AutoSwitchBotDirector::onLoad()
 	cvarManager->registerCvar("autodirector_when_goal_scored_in_replay", "1", "Auto switch to bot director when a goal is scored during a replay",
 		true, true, 0, true, 1). bindTo(enableWhenGoalScoredInReplay);
 
+
+	cvarManager->registerNotifier("camera_director", [&](std::vector<std::string> args) {
+		SwitchToBotDirector();
+		}, "Switch to bot director", 0);
+
+
 	gameWrapper->HookEventPost("Function GameEvent_Soccar_TA.ReplayPlayback.BeginState",
 		std::bind(&AutoSwitchBotDirector::OnReplayBegins, this, std::placeholders::_1));
 
@@ -42,13 +48,8 @@ void AutoSwitchBotDirector::onLoad()
 		std::bind(&AutoSwitchBotDirector::OnBallExplode, this, std::placeholders::_1));
 
 
-	cvarManager->registerNotifier("camera_director", [&](std::vector<std::string> args) {
-		SwitchToBotDirector();
-		}, "", 0);
-
-
 	//Debug command to score a goal
-	cvarManager->registerNotifier("tpball", [&](std::vector<std::string> args) {
+	/*cvarManager->registerNotifier("tpball", [&](std::vector<std::string> args) {
 		ServerWrapper server = gameWrapper->GetCurrentGameState();
 		if (!server)
 		{
@@ -64,7 +65,7 @@ void AutoSwitchBotDirector::onLoad()
 		}
 
 		ball.SetLocation(Vector(0, 5400, 100));
-		}, "", 0);
+		}, "", 0);*/
 }
 
 void AutoSwitchBotDirector::SwitchToBotDirector()
