@@ -20,12 +20,23 @@ class AutoSwitchBotDirector: public BakkesMod::Plugin::BakkesModPlugin
 	void onLoad() override;
 	//void onUnload() override; // Uncomment and implement if you need a unload method
 
-	bool enableForEndOfReplay = true;
-	bool enableForOvertimeKickOff = true;
+	std::shared_ptr<bool> enableWhenEndOfReplay;
+	std::shared_ptr<bool> enableWhenOvertimeKickOff;
+	std::shared_ptr<bool> enableWhenEndOfCountdown;
+	std::shared_ptr<bool> enableWhenGoalScoredInReplay;
+
+	bool isInReplay = false;
 
 	void SwitchToBotDirector();
-	void OnOvertimeKickOffBegins(std::string eventName);
+
+	//Events
+	void OnKickOffBegins(ServerWrapper caller, void* params, std::string eventName);
+	void OnReplayBegins(std::string eventName);
 	void OnReplayEnds(std::string eventName);
+	void OnCountdownEnds(std::string eventName);
+	void OnBallExplode(std::string eventName);
+
+	void RenderCheckbox(const std::string& _label, bool* _value, const std::string& _cvar, const std::string& toolTipLabel);
 
 public:
 	void RenderSettings() override; // Uncomment if you wanna render your own tab in the settings menu
