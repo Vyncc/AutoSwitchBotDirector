@@ -132,11 +132,14 @@ void AutoSwitchBotDirector::OnCountdownEnds(std::string eventName)
 
 void AutoSwitchBotDirector::OnBallExplode(std::string eventName)
 {
-	if (*enableWhenGoalScoredInReplay)
+	if (isInReplay && *enableWhenGoalScoredInReplay)
 	{
-		if (isInReplay)
+		if (cvarManager->getCvar("cl_goalreplay_pov").getBoolValue() == true)
 		{
-			SwitchToBotDirector();
+			LOG("Disabling POV goal replays");
+			cvarManager->executeCommand("cl_goalreplay_pov 0");
 		}
+
+		SwitchToBotDirector();
 	}
 }
