@@ -44,28 +44,49 @@ void AutoSwitchBotDirector::onLoad()
 	gameWrapper->HookEvent("Function GameEvent_Soccar_TA.Countdown.EndState",
 		std::bind(&AutoSwitchBotDirector::OnCountdownEnds, this, std::placeholders::_1));
 
-	gameWrapper->HookEvent("Function TAGame.Ball_TA.Explode",
-		std::bind(&AutoSwitchBotDirector::OnBallExplode, this, std::placeholders::_1));
+	/*gameWrapper->HookEvent("Function TAGame.Ball_TA.Explode",
+		std::bind(&AutoSwitchBotDirector::OnBallExplode, this, std::placeholders::_1));*/
 
+	gameWrapper->HookEvent("Function TAGame.Replay_TA.Tick",
+		std::bind(&AutoSwitchBotDirector::OnReplayTick, this, std::placeholders::_1));
 
-	//Debug command to score a goal
-	/*cvarManager->registerNotifier("tpball", [&](std::vector<std::string> args) {
-		ServerWrapper server = gameWrapper->GetCurrentGameState();
-		if (!server)
+	gameWrapper->HookEventWithCaller<BallWrapper>("Function TAGame.Ball_TA.OnHitGoal",
+		std::bind(&AutoSwitchBotDirector::OnHitGoal, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+}
+
+std::string AutoSwitchBotDirector::GetCameraMode()
+{
+	PlayerControllerWrapper pc = gameWrapper->GetPlayerController();
+	if (!pc) return "null";
+
+	SpectatorHUDWrapper spectatorHUD = pc.GetSpectatorHud();
+	if (!spectatorHUD) return "null";
+
+	ReplayViewerDataWrapper replayViewer = spectatorHUD.GetViewerData();
+	if (!replayViewer) return "null";
+
+	return replayViewer.GetCameraMode();
+}
+
+void AutoSwitchBotDirector::CheckGoalReplayForAutoSwitch(const float& ballLocY, const float& treshHold)
+{
+	if (ballLocY > treshHold || ballLocY < -treshHold)
+	{
+		std::string camMode = GetCameraMode();
+		//LOG("camMode : {}", camMode);
+
+		if (camMode != "Camera_Director")
 		{
-			LOG("[ERROR]server NULL!");
-			return;
-		}
+			LOG("treshHold : {}", treshHold);
 
-		BallWrapper ball = server.GetBall();
-		if (!ball)
-		{
-			LOG("[ERROR]ball NULL!");
-			return;
+			if (cvarManager->getCvar("cl_goalreplay_pov").getBoolValue() == true)
+			{
+				LOG("Disabling POV goal replays");
+				cvarManager->executeCommand("cl_goalreplay_pov 0");
+			}
+			SwitchToBotDirector();
 		}
-
-		ball.SetLocation(Vector(0, 5400, 100));
-		}, "", 0);*/
+	}
 }
 
 void AutoSwitchBotDirector::SwitchToBotDirector()
@@ -130,16 +151,72 @@ void AutoSwitchBotDirector::OnCountdownEnds(std::string eventName)
 	}
 }
 
-void AutoSwitchBotDirector::OnBallExplode(std::string eventName)
+//void AutoSwitchBotDirector::OnBallExplode(std::string eventName)
+//{
+//	if (isInReplay && *enableWhenGoalScoredInReplay)
+//	{
+//		if (cvarManager->getCvar("cl_goalreplay_pov").getBoolValue() == true)
+//		{
+//			LOG("Disabling POV goal replays");
+//			cvarManager->executeCommand("cl_goalreplay_pov 0");
+//		}
+//		SwitchToBotDirector();
+//	}
+//}
+
+void AutoSwitchBotDirector::OnReplayTick(std::string eventName)
 {
 	if (isInReplay && *enableWhenGoalScoredInReplay)
 	{
-		if (cvarManager->getCvar("cl_goalreplay_pov").getBoolValue() == true)
-		{
-			LOG("Disabling POV goal replays");
-			cvarManager->executeCommand("cl_goalreplay_pov 0");
-		}
+		ServerWrapper server = gameWrapper->GetCurrentGameState();
+		if (!server) return;
 
-		SwitchToBotDirector();
+		BallWrapper ball = server.GetBall();
+		if (!ball) return;
+
+		float ballLocY = ball.GetLocation().Y;
+		//LOG("Ball Y : {}", ballLocY);
+
+		if (goalSpeed < 50.f)
+		{
+			CheckGoalReplayForAutoSwitch(ballLocY, 5210.f);
+		}
+		else if (goalSpeed < 70.f)
+		{
+			CheckGoalReplayForAutoSwitch(ballLocY, 5190.f);
+		}
+		else if (goalSpeed < 90.f)
+		{
+			CheckGoalReplayForAutoSwitch(ballLocY, 5175.f);
+		}
+		else if (goalSpeed < 110.f)
+		{
+			CheckGoalReplayForAutoSwitch(ballLocY, 5160.f);
+		}
+		else if (goalSpeed < 130.f)
+		{
+			CheckGoalReplayForAutoSwitch(ballLocY, 5145.f);
+		}
+		else if (goalSpeed < 150.f)
+		{
+			CheckGoalReplayForAutoSwitch(ballLocY, 5130.f);
+		}
+		else if (goalSpeed < 170.f)
+		{
+			CheckGoalReplayForAutoSwitch(ballLocY, 5115.f);
+		}
+		else
+		{
+			CheckGoalReplayForAutoSwitch(ballLocY, 5110.f);
+		}
+	}
+}
+
+void AutoSwitchBotDirector::OnHitGoal(BallWrapper caller, void* params, std::string eventName)
+{
+	if (!isInReplay)
+	{
+		goalSpeed = caller.GetVelocity().magnitude() * 0.036f; //in km/h
+		LOG("goalSpeed : {}", goalSpeed);
 	}
 }

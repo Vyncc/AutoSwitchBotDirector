@@ -26,7 +26,10 @@ class AutoSwitchBotDirector: public BakkesMod::Plugin::BakkesModPlugin
 	std::shared_ptr<bool> enableWhenGoalScoredInReplay;
 
 	bool isInReplay = false;
+	float goalSpeed = -1.f;
 
+	std::string GetCameraMode();
+	void CheckGoalReplayForAutoSwitch(const float& ballLocY, const float& treshHold);
 	void SwitchToBotDirector();
 
 	//Events
@@ -34,7 +37,9 @@ class AutoSwitchBotDirector: public BakkesMod::Plugin::BakkesModPlugin
 	void OnReplayBegins(std::string eventName);
 	void OnReplayEnds(std::string eventName);
 	void OnCountdownEnds(std::string eventName);
-	void OnBallExplode(std::string eventName);
+	//void OnBallExplode(std::string eventName);
+	void OnReplayTick(std::string eventName);
+	void OnHitGoal(BallWrapper caller, void* params, std::string eventName);
 
 	void RenderCheckbox(const std::string& _label, bool* _value, const std::string& _cvar, const std::string& toolTipLabel);
 
